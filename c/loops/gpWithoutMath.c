@@ -1,0 +1,13 @@
+#include<stdio.h>
+int main(){
+    int n;
+    printf("enter a number:");
+    scanf("%d",&n);
+    int a=1;
+        //inter a number of gp 1 2 4 8 16 .....n
+        for(int i=1; i<=n; i++){
+            printf("%d\n",a);
+            a=a*2;
+        }
+        return 0;
+}
