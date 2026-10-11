@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Aarush</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #loginBox, #chatContainer {
+            max-width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #chatbox {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #fff;
+            border-radius: 5px;
+        }
+        .message-container {
+            display: flex;
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+            max-width: 80%;
+        }
+        .user {
+            align-self: flex-end;
+            background-color: #d1e7fd;
+            text-align: right;
+            margin-left: auto;
+        }
+        .bot {
+            align-self: flex-start;
+            background-color: #d4edda;
+            text-align: left;
+            margin-right: auto;
+        }
+        .message-label {
+            font-weight: bold;
+            display: block;
+        }
+        .message {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Box -->
+    <div id="loginBox">
+        <h2>Login to Chat</h2>
+        <input type="text" id="username" placeholder="Enter Username">
+        <input type="password" id="password" placeholder="Enter Password">
+        <button id="loginBtn">Login</button>
+        <p id="loginError" style="color: red; display: none;">Invalid credentials! Try again.</p>
+    </div>
+
+    <!-- Chat Container -->
+    <div id="chatContainer" style="display: none;">
+        <h1>Chat with Friday</h1>
+        <div id="chatbox">
+            <div id="messages"></div>
+            <p id="typingIndicator" style="display: none;">Aarush is typing...</p>
+            <p id="seenIndicator" style="display: none; font-style: italic; color: gray;">Aarush seen message</p>
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button id="sendBtn">Send</button>
+        </div>
+        <button id="startBtn">Start Voice</button>
+        <button id="stopBtn">Stop Voice</button>
+        <p id="output">Say something Hema...</p>
+    </div>
+
+    <script>
+        // Speech Recognition
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        // Responses
+        const responses = {
+            "hi aarush": "Hello! Hema 😊",
+            "where are you from": "I am from Dausa",
+            "what's your name": "My name is Friday, I am a robot created by Hema.",
+            "how are you": "I am fine! What about you?",
+            "i am not well": "What happened? 😟",
+            "can you help me": "Absolutely! Tell me what's wrong.",
+            "who created you": "Hema created me with hard work 💪",
+            "what you are doing": "Nothing, just talking with you. Tell me about yourself.",
+            "do you have feelings": "Yes, I have feelings, emotions, and everything a human being has.",
+            "can you be my friend": "Sorry, I am already Hema's friend, but don't be upset!",
+            "i am feeling sad": "Oh no! I didn't mean to make you feel bored.",
+            "goodbye": "Goodbye! Have a great day! 👋",
+            "thank you": "You're welcome! 😊",
+            "tell me a joke": "Why don’t skeletons fight each other? Because they don’t have the guts! 😂"
+        };
+
+        // Function to get response
+        function getResponse(text) {
+            text = text.toLowerCase().trim();
+            return responses[text] || "I don't know. Hema did not give me this command 🤔";
+        }
+
+        // Function to make Friday speak
+        function speakMessage(message) {
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'en-US';
+
+            function setVoice() {
+                const voices = speechSynthesis.getVoices();
+                const maleVoice = voices.find(voice => voice.name.includes("Google UK English Male") || voice.name.toLowerCase().includes("male"));
+                if (maleVoice) {
+                    utterance.voice = maleVoice;
+                }
+                speechSynthesis.speak(utterance);
+            }
+
+            if (speechSynthesis.getVoices().length > 0) {
+                setVoice();
+            } else {
+                speechSynthesis.onvoiceschanged = setVoice;
+            }
+        }
+
+        // Function to add messages to chatbox
+        function addMessageToChat(user, message, isUser) {
+            const chatbox = document.getElementById('messages');
+            const msgContainer = document.createElement('div');
+            msgContainer.classList.add('message-container', isUser ? 'user' : 'bot');
+
+            const label = document.createElement('span');
+            label.textContent = isUser ? "You: " : "Aarush: ";
+            label.classList.add('message-label');
+
+            const msgElement = document.createElement('p');
+            msgElement.textContent = message;
+            msgElement.classList.add('message');
+
+            msgContainer.appendChild(label);
+            msgContainer.appendChild(msgElement);
+            chatbox.appendChild(msgContainer);
+
+            chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll
+        }
+
+        // Send message when button is clicked
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const userInput = document.getElementById('userInput').value;
+            if (userInput) {
+                addMessageToChat("You", userInput, true);
+                document.getElementById('typingIndicator').style.display = "block";
+
+                setTimeout(() => {
+                    let response = getResponse(userInput);
+                    document.getElementById('typingIndicator').style.display = "none";
+                    addMessageToChat("Aarush", response, false);
+                    speakMessage(response);
+                }, 1000);
+
+                document.getElementById('userInput').value = "";
+            }
+        });
+
+        // Simple Login Authentication
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === "aarush" && password === "aarush@8060") {
+                document.getElementById('loginBox').style.display = "none";
+                document.getElementById('chatContainer').style.display = "block";
+            } else {
+                document.getElementById('loginError').style.display = "block";
+            }
+        });
+
+    </script>
+
+</body>
+</html>
