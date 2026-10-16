@@ -16,8 +16,7 @@ using namespace std;
                 count ++;
             }
             if(max<count) max = count;
-        }
-        
+        }       
     }
     cout<<max; 
 
